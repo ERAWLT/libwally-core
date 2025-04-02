@@ -4555,8 +4555,10 @@ static int get_signing_data(const struct wally_psbt *psbt,
             /* Add items to maps without allocating/copying */
             append_signing_data(scripts, i, utxo->script, utxo->script_len);
             if (assets) {
+#ifdef BUILD_ELEMENTS
                 append_signing_data(assets, i, utxo->asset, utxo->asset_len);
                 append_signing_data(values, i, utxo->value, utxo->value_len);
+#endif
             } else {
                 append_signing_data(values, i, (unsigned char*)&utxo->satoshi,
                                     sizeof(utxo->satoshi));
@@ -4615,14 +4617,22 @@ int wally_psbt_get_input_signature_hash(struct wally_psbt *psbt, size_t index,
         sighash_type = WALLY_SIGTYPE_PRE_SW;
 
     ret = get_signing_data(psbt, &scripts, assets_p, &values);
-    if (ret == WALLY_OK)
+    if (ret == WALLY_OK) {
+        size_t blockhash_len = SHA256_LEN;
+#ifdef BUILD_ELEMENTS
+        unsigned char* blockhash = psbt->genesis_blockhash;
+        blockhash_len = sizeof(psbt->genesis_blockhash);
+#else
+        unsigned char blockhash[SHA256_LEN] = {0};
+#endif
         ret = wally_tx_get_input_signature_hash(tx, index,
                 &scripts, assets_p, &values,
                 script, script_len,
                 0, WALLY_NO_CODESEPARATOR, NULL, 0,
-                psbt->genesis_blockhash, sizeof(psbt->genesis_blockhash),
+                blockhash, blockhash_len,
                 sighash, sighash_type,
                 psbt->signing_cache, bytes_out, len);
+    }
 
     wally_free(scripts.items); /* No need to clear the value pointers */
     wally_free(values.items);
@@ -4747,7 +4757,7 @@ int wally_psbt_sign_bip32(struct wally_psbt *psbt,
     /* Go through each of the inputs */
     for (i = 0; ret == WALLY_OK && i < psbt->num_inputs; ++i) {
         unsigned char txhash[WALLY_TXHASH_LEN];
-        const unsigned char *script, *scriptcode;
+        const unsigned char *script = NULL, *scriptcode = NULL;
         size_t script_len, scriptcode_len, subindex = 0;
         struct ext_key *derived = NULL;
 
