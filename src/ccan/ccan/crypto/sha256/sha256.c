@@ -45,20 +45,24 @@ void sha256_done(struct sha256_ctx *ctx, struct sha256 *res)
 	invalidate_sha256(ctx);
 }
 #elif defined(CCAN_CRYPTO_SHA256_USE_MBEDTLS)
+#if defined(MBEDTLS_SHA256_ALT)
+# include <sha256_alt.h>
+#endif
+
 inline void sha256_init(struct sha256_ctx *ctx)
 {
 	mbedtls_sha256_init(&ctx->c);
-	mbedtls_sha256_starts(&ctx->c, 0);
+	mbedtls_sha256_starts_ret(&ctx->c, 0);
 }
 
 inline void sha256_update(struct sha256_ctx *ctx, const void *p, size_t size)
 {
-	mbedtls_sha256_update(&ctx->c, p, size);
+	mbedtls_sha256_update_ret(&ctx->c, p, size);
 }
 
 inline void sha256_done(struct sha256_ctx *ctx, struct sha256* res)
 {
-	mbedtls_sha256_finish(&ctx->c, res->u.u8);
+	mbedtls_sha256_finish_ret(&ctx->c, res->u.u8);
 }
 void sha256_optimize(void)
 {
