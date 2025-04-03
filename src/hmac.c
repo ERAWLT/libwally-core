@@ -14,6 +14,8 @@
 #ifdef CCAN_CRYPTO_SHA256_USE_MBEDTLS
 #ifndef CONFIG_MBEDTLS_HARDWARE_SHA
 #define SHA_CTX_BUFF c.MBEDTLS_PRIVATE(buffer)
+#elif MBEDTLS_SHA256_ALT
+#define SHA_CTX_BUFF c.sbuf
 #else
 #define SHA_CTX_BUFF c.buffer
 #endif

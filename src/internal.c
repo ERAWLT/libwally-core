@@ -203,6 +203,8 @@ static void sha256_midstate(struct sha256_ctx *ctx, struct sha256 *res)
 #ifdef CCAN_CRYPTO_SHA256_USE_MBEDTLS
 #ifndef CONFIG_MBEDTLS_HARDWARE_SHA
 #define SHA_CTX_STATE c.MBEDTLS_PRIVATE(state)
+#elif MBEDTLS_SHA256_ALT
+#define SHA_CTX_STATE c.ctx_save_regs
 #else
 #define SHA_CTX_STATE c.state
 #endif
